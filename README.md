@@ -511,5 +511,725 @@ Meaning:
 
 
 
-```shell
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<br><br>
+
+---
+
+<br><br>
+
+
+
+# Tags
+
+<details><summary>Click to expand..</summary>
+
+### **Teil 1: Das Fundament – TSDoc Kernkonzepte**
+
+Dieser Abschnitt definiert die grundlegenden Bausteine und Regeln des TSDoc-Systems.
+
+#### **1.1 Die drei Tag-Kategorien**
+
+Jeder Tag in TSDoc gehört zu genau einer dieser drei Kategorien, die seine syntaktische Rolle bestimmen.
+
+| Kategorie | Erkennungsmerkmal | Zweck & Verhalten |
+| :--- | :--- | :--- |
+| **Block Tag** | `@tagname` am Zeilenanfang. | Definiert einen eigenständigen, thematischen Inhaltsblock. Der gesamte Text bis zum nächsten Tag gehört zu diesem Block. |
+| **Modifier Tag**| `@tagname` am Zeilenanfang, meist ohne nachfolgenden Inhalt. | Weist einem API-Element eine spezifische Eigenschaft oder ein Metadatum zu (z.B. Sichtbarkeit, Status). |
+| **Inline Tag** | `{` `@tagname ...` `}` direkt im Textfluss. | Wird innerhalb von Textblöcken verwendet, um dynamische Inhalte wie Hyperlinks oder geerbte Dokumentation einzufügen. |
+
+#### **1.2 Die drei Standardisierungs-Gruppen**
+
+Diese Gruppen klassifizieren die Verbindlichkeit und den Support-Level eines Tags über verschiedene TSDoc-kompatible Tools hinweg.
+
+| Gruppe | Verbindlichkeit | Bedeutung für die Praxis |
+| :--- | :--- | :--- |
+| **Core** | **Essenziell & verpflichtend.** | Jedes TSDoc-Tool muss diese Tags und ihre Semantik vollständig unterstützen. Absolut verlässlich. |
+| **Extended** | **Optional, aber standardisiert.** | Tools können diese Tags unterstützen. Wenn sie es tun, müssen sie sich an die offizielle Syntax und Semantik halten. |
+| **Discretionary**| **Optional & implementierungsspezifisch.** | Syntax ist meist vorgegeben, die genaue Bedeutung kann sich aber je nach Tool unterscheiden. Für spezielle Anwendungsfälle. |
+
+#### **1.3 Die Deklarations-Referenz-Syntax**
+
+Dies ist die Grammatik zur eindeutigen Adressierung von Code-Elementen, die hauptsächlich in `@link` und `@inheritDoc` Tags verwendet wird.
+
+*   **Grundlagen:** Eine Referenz kann auf globale Symbole, Module oder deren Exporte und Member verweisen.
+*   **Navigations-Operatoren:**
+    *   `!` : Trennt eine Modulquelle vom Symbol (`ModuleSource!SymbolReference`). Dient als Einstiegspunkt in ein Paket.
+    *   `.` : Navigiert zu `exports` eines Symbols.
+    *   `#` : Navigiert zu `members` (Instanz-Member) eines Symbols.
+    *   `~` : Navigiert zu `locals` (interne, nicht-exportierte Member) eines Symbols.
+*   **Syntax-Muster:**
+    *   **Globales Symbol:** `!MyGlobal`
+    *   **Modul-Referenz:** `my-package-name!`
+    *   **Export eines Moduls:** `my-package-name!MyClass`
+    *   **Member einer Klasse:** `MyClass#myMethod`
+    *   **Bedeutung/Disambiguierung:** Ein Doppelpunkt `:` gefolgt von einem Schlüsselwort (`:class`, `:function(1)`) löst Mehrdeutigkeiten auf.
+
+---
+
+### **Teil 2: Das TSDoc Tag-Verzeichnis**
+
+Eine vollständige, alphabetisch geordnete Referenz aller Standard-Tags. Jeder Eintrag folgt einem identischen, maschinenlesbaren Schema.
+
+---
+
+### `@alpha`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Modifier Tag |
+| **Standard** | Discretionary |
+
+**Zweck & Anwendung:**
+Markiert ein API-Element als im "Alpha"-Stadium. Es ist für die Nutzung durch Dritte vorgesehen, aber noch nicht final freigegeben und kann sich jederzeit ohne Vorwarnung ändern. Tooling kann dieses Element aus einem Public Release entfernen.
+
+**Beispiel:**
+```typescript
+/**
+ * Represents a book in the catalog.
+ * @public
+ */
+export class Book {
+  /**
+   * The title of the book.
+   * @alpha
+   */
+  public get title(): string;
+
+  /**
+   * The author of the book.
+   */
+  public get author(): string;
+}
 ```
+
+---
+
+### `@beta`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Modifier Tag |
+| **Standard** | Discretionary |
+| **Synonyme** | `@experimental` |
+
+**Zweck & Anwendung:**
+Markiert ein API-Element als im "Beta"-Stadium. Es wurde experimentell für Dritte freigegeben, um Feedback zu sammeln. Es sollte nicht in Produktionsumgebungen verwendet werden, da sich der Vertrag ändern kann.
+
+**Beispiel:**
+```typescript
+/**
+ * Represents a book in the catalog.
+ * @public
+ */
+export class Book {
+  /**
+   * The title of the book.
+   * @beta
+   */
+  public get title(): string;
+
+  /**
+   * The author of the book.
+   */
+  public get author(): string;
+}
+```
+
+---
+
+### `@decorator`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Block Tag |
+| **Standard** | Extended |
+
+**Zweck & Anwendung:**
+Dient als Workaround, um ECMAScript-Decorators zu dokumentieren, da diese vom TypeScript-Compiler nicht in die `.d.ts`-Ausgabedateien übernommen werden. Der Decorator-Ausdruck wird als Text zitiert.
+
+**Beispiel:**
+```typescript
+class Book {
+  /**
+   * The title of the book.
+   * @decorator `@jsonSerialized`
+   * @decorator `@jsonFormat(JsonFormats.Url)`
+   */
+  @jsonSerialized
+  @jsonFormat(JsonFormats.Url)
+  public website: string;
+}
+```
+
+---
+
+### `@deprecated`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Block Tag |
+| **Standard** | Core |
+
+**Zweck & Anwendung:**
+Kommuniziert, dass ein API-Element nicht mehr unterstützt wird und in einer zukünftigen Version entfernt werden kann. Dem Tag sollte ein Satz folgen, der die empfohlene Alternative beschreibt. Gilt rekursiv für alle untergeordneten Member.
+
+**Beispiel:**
+```typescript
+/**
+ * The base class for controls that can be rendered.
+ *
+ * @deprecated Use the new {@link Control} base class instead.
+ */
+export class VisualControl {
+  // . . .
+}
+```
+
+---
+
+### `@defaultValue`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Block Tag |
+| **Standard** | Extended |
+
+**Zweck & Anwendung:**
+Dokumentiert den Standardwert für ein Feld oder eine Eigenschaft, wenn kein expliziter Wert zugewiesen wird.
+
+**Beispiel:**
+```typescript
+interface IWarningOptions {
+  /**
+   * Determines how the warning will be displayed.
+   * @defaultValue `WarningStyle.DialogBox`
+   */
+  warningStyle?: WarningStyle;
+}
+```
+
+---
+
+### `@eventProperty`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Modifier Tag |
+| **Standard** | Extended |
+
+**Zweck & Anwendung:**
+Zeigt bei einer Klassen- oder Interface-Eigenschaft an, dass diese ein Event-Objekt zurückgibt, an das Event-Handler angehängt werden können. Dokumentations-Tools können solche Eigenschaften unter einer eigenen "Events"-Überschrift anzeigen.
+
+**Beispiel:**
+```typescript
+class MyClass {
+  /**
+   * This event is fired whenever the application navigates to a new page.
+   * @eventProperty
+   */
+  public readonly navigatedEvent: FrameworkEvent<NavigatedEventArgs>;
+}
+```
+
+---
+
+### `@example`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Block Tag |
+| **Standard** | Extended |
+
+**Zweck & Anwendung:**
+Leitet einen Abschnitt ein, der ein Anwendungsbeispiel für die API illustriert. Text auf derselben Zeile wie `@example` wird als Titel für das Beispiel interpretiert.
+
+**Beispiel:**
+```typescript
+/**
+ * Adds two numbers together.
+ * @example
+ * Here's a simple example:
+ * ```
+ * // Prints "2":
+ * console.log(add(1,1));
+ * ```
+ * @example Here's an example with negative numbers:
+ * ```
+ * // Prints "0":
+ * console.log(add(1,-1));
+ * ```
+ */
+export function add(x: number, y: number): number {}
+```
+
+---
+
+### `@experimental`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Modifier Tag |
+| **Standard** | Discretionary |
+| **Synonyme** | `@beta` |
+
+**Zweck & Anwendung:**
+Identische Semantik wie `@beta`. Wird von Tools verwendet, die keine separate `@alpha`-Phase unterstützen.
+
+**Beispiel:**
+```typescript
+/**
+ * Represents a book in the catalog.
+ * @public
+ */
+export class Book {
+  /**
+   * The title of the book.
+   * @experimental
+   */
+  public get title(): string;
+}
+```
+
+---
+
+### `@inheritDoc`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Inline Tag |
+| **Standard** | Extended |
+
+**Zweck & Anwendung:**
+Kopiert die Dokumentation (Zusammenfassung, `@remarks`, `@params`, `@typeParam`, `@returns`) von einem anderen API-Element. Andere Tags wie `@example` werden nicht kopiert.
+
+**Beispiel:**
+```typescript
+export class Button implements IWidget {
+  /** {@inheritDoc IWidget.draw} */
+  public draw(x: number, y: number): void {
+    // . . .
+  }
+}
+```
+
+---
+
+### `@internal`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Modifier Tag |
+| **Standard** | Discretionary |
+
+**Zweck & Anwendung:**
+Markiert ein API-Element als nicht für die Nutzung durch Dritte vorgesehen. Tooling kann dieses Element aus einer öffentlichen Dokumentation oder Release-Artefakten entfernen.
+
+**Beispiel:**
+```typescript
+/**
+ * Represents a book in the catalog.
+ * @public
+ */
+export class Book {
+  /**
+   * The title of the book.
+   * @internal
+   */
+  public get _title(): string;
+}
+```
+
+---
+
+### `@label`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Inline Tag |
+| **Standard** | Core |
+
+**Zweck & Anwendung:**
+Vergibt ein eindeutiges Label für eine Deklaration (z.B. einen Indexer oder eine Funktionsüberladung), um sie über die Deklarations-Referenz-Syntax eindeutig referenzierbar zu machen.
+
+**Beispiel:**
+```typescript
+export interface Interface {
+  /**
+   * {@label STRING_INDEXER}
+   */
+  [key: string]: number;
+}
+```
+
+---
+
+### `@link`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Inline Tag |
+| **Standard** | Core |
+
+**Zweck & Anwendung:**
+Erstellt Hyperlinks zu externen URLs oder anderen API-Elementen mittels Deklarations-Referenz-Syntax. Optional kann ein alternativer Link-Text angegeben werden.
+
+**Beispiel:**
+```typescript
+/**
+ * Links can point to a URL: {@link https://github.com/microsoft/tsdoc}
+ *
+ * Links can point to an API item: {@link Button}
+ *
+ * You can optionally include custom link text: {@link Button | the Button class}
+ *
+ * It can also reference a member of a class:
+ * {@link controls.Button.render | the render() method}
+ */
+```
+
+---
+
+### `@override`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Modifier Tag |
+| **Standard** | Extended |
+
+**Zweck & Anwendung:**
+Zeigt explizit an, dass eine Methode oder Eigenschaft eine Definition aus einer Basisklasse überschreibt. Gegenstück zu `@virtual`.
+
+**Beispiel:**
+```typescript
+class Base {
+  /** @virtual */
+  public render(): void {}
+}
+
+class Child extends Base {
+  /** @override */
+  public render(): void;
+}
+```
+
+---
+
+### `@packageDocumentation`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Modifier Tag |
+| **Standard** | Core |
+
+**Zweck & Anwendung:**
+Markiert, dass ein Kommentarblock ein gesamtes NPM-Paket beschreibt. Dieser Kommentar muss der erste `/** ... */`-Block in der Entrypoint-Datei des Pakets sein und darf nicht für ein einzelnes API-Element verwendet werden.
+
+**Beispiel:**
+```typescript
+/**
+ * A library for building widgets.
+ *
+ * @remarks
+ * The `widget-lib` defines the {@link IWidget} interface...
+ *
+ * @packageDocumentation
+ */
+```
+
+---
+
+### `@param`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Block Tag |
+| **Standard** | Core |
+
+**Zweck & Anwendung:**
+Dokumentiert einen Parameter einer Funktion. Die Syntax ist `@param parameterName - Beschreibung`.
+
+**Beispiel:**
+```typescript
+/**
+ * Returns the average of two numbers.
+ * @param x - The first input number
+ * @param y - The second input number
+ * @returns The arithmetic mean of `x` and `y`
+ */
+function getAverage(x: number, y: number): number {
+  return (x + y) / 2.0;
+}
+```
+
+---
+
+### `@privateRemarks`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Block Tag |
+| **Standard** | Core |
+
+**Zweck & Anwendung:**
+Startet einen Inhaltsblock, der nicht für die öffentliche Zielgruppe bestimmt ist. Ein TSDoc-Tool muss diesen gesamten Abschnitt aus allen öffentlichen Ausgaben (Websites, `.d.ts`-Dateien) entfernen.
+
+**Beispiel:**
+```typescript
+/**
+ * Summary for the public.
+ * @remarks
+ * Remarks for the public.
+ * @privateRemarks
+ * This content is for internal developers only and will be stripped
+ * from public documentation.
+ */
+```
+
+---
+
+### `@public`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Modifier Tag |
+| **Standard** | Discretionary |
+
+**Zweck & Anwendung:**
+Markiert ein API-Element als offiziell freigegeben ("public"). Seine Signatur wird als stabil garantiert (z.B. gemäß Semantic Versioning).
+
+**Beispiel:**
+```typescript
+/**
+ * Represents a book in the catalog.
+ * @public
+ */
+export class Book {
+  /**
+   * The author of the book.
+   */
+  public get author(): string;
+}
+```
+
+---
+
+### `@readonly`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Modifier Tag |
+| **Standard** | Extended |
+
+**Zweck & Anwendung:**
+Markiert ein API-Element als schreibgeschützt, auch wenn die Typsystem-Implementierung (z.B. ein Setter, der immer einen Fehler wirft) etwas anderes nahelegt.
+
+**Beispiel:**
+```typescript
+export class Book {
+  /**
+   * @readonly
+   */
+  public get title(): string {
+    return this._title;
+  }
+
+  public set title(value: string) {
+    throw new Error('This property is read-only!');
+  }
+}
+```
+
+---
+
+### `@remarks`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Block Tag |
+| **Standard** | Core |
+
+**Zweck & Anwendung:**
+Trennt die kurze Zusammenfassung (Summary) von der ausführlichen Beschreibung eines API-Elements. Der Inhalt nach `@remarks` bildet den Hauptteil der Detaildokumentation.
+
+**Beispiel:**
+```typescript
+/**
+ * The summary section should be brief.
+ *
+ * @remarks
+ * The main documentation for an API item is separated into a brief
+ * "summary" section optionally followed by an `@remarks` block containing
+ * additional details.
+ */
+```
+
+---
+
+### `@returns`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Block Tag |
+| **Standard** | Core |
+
+**Zweck & Anwendung:**
+Dokumentiert den Rückgabewert einer Funktion.
+
+**Beispiel:**
+```typescript
+/**
+ * Returns the average of two numbers.
+ * @param x - The first input number.
+ * @param y - The second input number.
+ * @returns The arithmetic mean of `x` and `y`.
+ */
+function getAverage(x: number, y: number): number {
+  return (x + y) / 2.0;
+}
+```
+
+---
+
+### `@sealed`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Modifier Tag |
+| **Standard** | Extended |
+
+**Zweck & Anwendung:**
+Verhindert, dass von einer Klasse geerbt wird oder dass eine Methode/Eigenschaft in einer Unterklasse überschrieben wird. Gegenstück zu `@virtual`.
+
+**Beispiel:**
+```typescript
+class Base {
+  /** @virtual */
+  public render(): void {}
+
+  /** @sealed */
+  public initialize(): void {}
+}
+```
+
+---
+
+### `@see`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Block Tag |
+| **Standard** | Extended |
+
+**Zweck & Anwendung:**
+Erstellt eine "Siehe auch"-Liste mit Verweisen auf andere API-Elemente oder Ressourcen. Jeder `@see`-Block wird zu einem separaten Punkt in der Liste. Hyperlinks müssen explizit mit `{@link}` erstellt werden.
+
+**Beispiel:**
+```typescript
+/**
+ * Parses a string containing a Uniform Resource Locator (URL).
+ * @see {@link ParsedUrl} for the returned data structure.
+ * @see {@link https://tools.ietf.org/html/rfc1738|RFC 1738} for syntax.
+ */
+function parseURL(url: string): ParsedUrl;
+```
+
+---
+
+### `@throws`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Block Tag |
+| **Standard** | Extended |
+
+**Zweck & Anwendung:**
+Dokumentiert einen Exception-Typ, der von einer Funktion geworfen werden kann. Für jeden Exception-Typ sollte ein eigener `@throws`-Block verwendet werden.
+
+**Beispiel:**
+```typescript
+/**
+ * @throws {@link IsbnSyntaxError}
+ * This exception is thrown if the input is not a valid ISBN number.
+ *
+ * @throws {@link book-lib#BookNotFoundError}
+ * Thrown if the ISBN number is valid, but no such book exists.
+ */
+function fetchBookByIsbn(isbnCode: string): Book;
+```
+
+---
+
+### `@typeParam`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Block Tag |
+| **Standard** | Core |
+| **Synonyme** | `<T>` (in JSDoc/JavaDoc) |
+
+**Zweck & Anwendung:**
+Dokumentiert einen generischen Typparameter (z.B. `<T>`). Die Syntax ist `@typeParam T - Beschreibung`.
+
+**Beispiel:**
+```typescript
+/**
+ * Wrapper for an HTTP Response.
+ * @typeParam B - Response body
+ * @typeParam H - Headers
+ */
+interface HttpResponse<B, H> {
+  body: B;
+  headers: H;
+}
+```
+
+---
+
+### `@virtual`
+
+| Eigenschaft | Wert |
+| :--- | :--- |
+| **Syntax** | Modifier Tag |
+| **Standard** | Extended |
+
+**Zweck & Anwendung:**
+Zeigt explizit an, dass eine Methode oder Eigenschaft von Unterklassen überschrieben werden darf. Gegenstück zu `@sealed` und `@override`.
+
+**Beispiel:**
+```typescript
+class Base {
+  /** @virtual */
+  public render(): void {}
+}
+
+class Child extends Base {
+  /** @override */
+  public render(): void;
+}
+```
+
+</details>
+
+
+
+
